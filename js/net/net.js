@@ -25,7 +25,7 @@ G.Net = (() => {
   // costaba del cooperativo. Sin conexión directa, esa pareja no puede jugar
   // junta ('failed') y el anfitrión lo reintenta cada RETRY_MS. Por la base de datos
   // sólo pasa la señalización (unos pocos mensajes pequeños para conectarse).
-  const ALLOW_RELAY = false, RETRY_MS = 15000;
+  const ALLOW_RELAY = true, RETRY_MS = 15000; // Spark: la base de datos no cobra, sólo se corta a los 10 GB/mes
 
 
   let rtdb = null, uid = null, roomId = null, isHost = false, hostUid = null;

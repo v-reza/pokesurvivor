@@ -274,7 +274,7 @@ G.I18n.add({
   // ---------------- menú ----------------
   'Jugar': 'Play', 'Entra en la mazmorra': 'Enter the dungeon', 'Pokémon': 'Pokémon', 'Tu colección': 'Your collection',
   'Mejoras': 'Upgrades', 'Haz más fuerte cada run': 'Make every run stronger', '9 regiones · Pokémon y shinies': '9 regions · Pokémon and shinies',
-  'Misiones': 'Missions', 'Misiones, logros y perfil': 'Missions, achievements and profile', 'Amigos': 'Friends', 'Juega en grupo, hasta 4': 'Play in a group, up to 4',
+  'Misiones': 'Missions', 'Misiones, logros y perfil': 'Missions, achievements and profile', 'Amigos': 'Friends', 'Juega en grupo, sin límite': 'Play in a group, unlimited',
   'Ranking': 'Leaderboard', 'Quién aguanta más': 'Who survives longest', 'Ajustes': 'Settings', 'Sonido, gráficos, controles y cuenta': 'Sound, graphics, controls and account',
   '{x} premio por recoger': '{x} reward to claim', '{x} premios por recoger': '{x} rewards to claim', 'premio por recoger': 'reward to claim', 'premios por recoger': 'rewards to claim',
   'Volver a tu sala ({x})': 'Back to your room ({x})', '{x} en línea': '{x} online', 'en línea': 'online',
@@ -377,7 +377,7 @@ G.I18n.add({
   'Sala': 'Room', 'Menú': 'Menu', 'Salir de la sala': 'Leave the room', 'Invitar amigos': 'Invite friends', 'Empezar partida': 'Start game',
   'Empezar partida ({x})': 'Start game ({x})', 'Anfitrión': 'Host', 'Libre': 'Free', 'Tú': 'You', 'Conectado': 'Connected', 'Conectado (por servidor)': 'Connected (via server)',
   'Conectando…': 'Connecting…', 'Conectando con tus amigos…': 'Connecting to your friends…', 'Ningún amigo en línea ahora mismo.': 'No friends online right now.',
-  'Eres el anfitrión. Invita a tus amigos (hasta {x}) y empezad cuando estéis.': 'You\'re the host. Invite your friends (up to {x}) and start when you\'re ready.',
+  'Eres el anfitrión. Invita a tus amigos (sin límite) y empezad cuando estéis.': 'You\'re the host. Invite your friends (no limit) and start when you\'re ready.',
   'Estás en la sala de {x}. El anfitrión empezará la partida.': 'You\'re in {x}\'s room. The host will start the game.',
   'Cuando el anfitrión empiece, entraréis todos a la vez.': 'When the host starts, you\'ll all join at the same time.', 'La partida empieza para todos a la vez.': 'The game starts for everyone at once.',
   'Necesitas al menos un amigo en la sala.': 'You need at least one friend in the room.', 'La sala se ha cerrado': 'The room has been closed',

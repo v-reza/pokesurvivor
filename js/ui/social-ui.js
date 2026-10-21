@@ -192,7 +192,7 @@
       if (!room) return;
       const ms = room.members;
       $('lobby-sub').textContent = room.isHost
-        ? 'Eres el anfitrión. Invita a tus amigos (hasta ' + G.Social.MAX_PLAYERS + ') y empezad cuando estéis.'
+        ? 'Eres el anfitrión. Invita a tus amigos (sin límite) y empezad cuando estéis.'
         : 'Estás en la sala de ' + ((ms.find(m => m.uid === room.host) || {}).name || '…') + '. El anfitrión empezará la partida.';
 
       // Las tarjetas sólo se rehacen si cambian los miembros (los sprites no parpadean).
@@ -201,12 +201,12 @@
       if (key !== membersKey) {
         membersKey = key;
         box.innerHTML = '';
-        for (let i = 0; i < G.Social.MAX_PLAYERS; i++) {
+        for (let i = 0, n = ms.length + 1; i < n; i++) {
           const m = ms[i];
           const c = document.createElement('div');
           c.className = 'lob-card' + (m ? '' : ' empty');
           if (m) {
-            c.style.setProperty('--pc', G.Coop.COLORS[i]);
+            c.style.setProperty('--pc', G.Coop.COLORS[i % G.Coop.COLORS.length]);
             c.appendChild(G.UI.spriteCanvas(m.dex, 120, 96, { scale: 2, lively: true, shiny: !!m.shiny }));
             c.insertAdjacentHTML('beforeend', `<b translate="no">${esc(m.name)}</b><small>${esc((G.DEX_BY[m.dex] || {}).name || '')}</small><span class="conn" data-u="${m.uid}"></span>`);
           } else c.innerHTML = '<span>Libre</span>';
@@ -247,7 +247,7 @@
       const connecting = ms.some(m => m.uid !== room.host && G.Net.mode(m.uid) === 'connecting');
       const failed = ms.some(m => m.uid !== room.host && G.Net.mode(m.uid) === 'failed');
       btn.disabled = !room.isHost || ms.length < 2 || connecting || failed;
-      btn.textContent = 'Empezar partida (' + ms.length + '/' + G.Social.MAX_PLAYERS + ')';
+      btn.textContent = 'Empezar partida (' + ms.length + ')';
       $('lobby-note').textContent = !room.isHost ? 'Cuando el anfitrión empiece, entraréis todos a la vez.'
         : ms.length < 2 ? 'Necesitas al menos un amigo en la sala.'
         : failed ? 'No se puede conectar con algún amigo: su red (o la tuya) no deja jugar en grupo. Probad con otra wifi o datos móviles; se reintenta solo.'
