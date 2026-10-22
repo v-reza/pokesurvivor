@@ -16,6 +16,25 @@ G.Icons = (() => {
                  '..kmwmmmnk..', '.kmwmsmmmnk.', '.kmmsssmmnk.', '.kmmmsmmmnk.', '..kmmmmmnk..', '...kkkkkk...'];
 
   const UI = {
+    // Tienda Kecleon y Mochila (20-10-2026, dibujados por TheAdro7 en el PR #236): MT, Menta, Cápsulas, Mochila y tienda.
+    tm: { pal: { b: '#7f93ff', d: '#4a5bc4', w: '#e6ecff' }, rows: [
+      '....kkkk....', '..kkbbbbkk..', '.kbbwwbbbbk.', '.kbwwbbbbbk.', 'kbbwbkkbbbbk', 'kbbbk..kbbbk',
+      'kbbbk..kbbbk', 'kbbbbkkbbbdk', '.kbbbbbbbdk.', '.kbbbbbbddk.', '..kkbbddkk..', '....kkkk....'] },
+    mint: { pal: { g: '#5fe08a', w: '#d6ffe2' }, rows: [
+      '............', '.......kkk..', '.....kkgggk.', '....kgggwgk.', '...kgggwggk.', '..kgggwgggk.',
+      '..kggwgggk..', '.kggwgggk...', '.kgwgggk....', '.kwkkkk.....', 'kk..........', 'k...........'] },
+    capsule: { pal: { r: '#ff5f6d', w: '#f4f8ff' }, rows: [
+      '............', '.......kkk..', '......krrrk.', '.....krwrrk.', '....krwrrrk.', '...kkrrrrk..',
+      '..kwwkkrk...', '.kwwwwkk....', '.kwwwwk.....', '.kwwwk......', '..kkk.......', '............'] },
+    capsuleh: { pal: { r: '#ffd23f', w: '#c47bff' }, rows: [
+      '............', '.......kkk..', '......krrrk.', '.....krwrrk.', '....krrrrrk.', '...kkrrrrk..',
+      '..kwwkkrk...', '.kwwwwkk....', '.kwwwwk.....', '.kwwwk......', '..kkk.......', '............'] },
+    bag: { pal: { b: '#e0743d', d: '#9a4418', w: '#ffc59f', y: '#ffd23f' }, rows: [
+      '....kkkk....', '...k....k...', '..kkkkkkkk..', '.kbbbbbbbbk.', '.kbwbbbbbbk.', '.kkkkkkkkkk.',
+      '.kbbbyybbbk.', '.kbbbyybbbk.', '.kbbbbbbbbk.', '.kbbbbbbbdk.', '.kddddddddk.', '..kkkkkkkk..'] },
+    shop: { pal: { g: '#5fe08a', w: '#f4f8ff', b: '#b07a4a', y: '#ffd23f' }, rows: [
+      '............', 'kkkkkkkkkkkk', 'kgwgwgwgwgwk', 'kgwgwgwgwgwk', 'kkkkkkkkkkkk', '.kbbbbbbbbk.',
+      '.kbkkkbbbbk.', '.kbkwkbyybk.', '.kbkwkbyybk.', '.kbkwkbbbbk.', '.kbkwkbbbbk.', 'kkkkkkkkkkkk'] },
     gear: { pal: { g: '#c9d6ff', d: '#7f93c9' }, rows: [
       '....kkkk....', '.kk.kggk.kk.', '.kgkkggkkgk.', '..kggggggk..', 'kkggkkkkggkk', 'kgggk..kgddk',
       'kgggk..kgddk', 'kkggkkkkddkk', '..kggddddk..', '.kgkkddkkdk.', '.kk.kddk.kk.', '....kkkk....'] },
@@ -173,6 +192,9 @@ G.Icons = (() => {
     friends: { pal: { b: '#4fb4ff', d: '#2a6fb0', g: '#5fe08a', h: '#2f9a52' }, rows: [
       '............', '..kkk..kkk..', '.kbbbkkgggk.', '.kbbbkkgggk.', '..kkk..kkk..', '............',
       '.kkkkkkkkkk.', 'kbbbbkkggggk', 'kbbbbkkggggk', 'kddddkkhhhhk', 'kkkkkkkkkkkk', '............'] },
+    save: { pal: { b: '#4f7bd6', d: '#2a4590', w: '#e8eefc', s: '#8a96b8', l: '#f4f4ff', g: '#9fb0d8' }, rows: [
+      'kkkkkkkkkkk.', 'kbkwwwwwkbkk', 'kbkwwswwkbbk', 'kbkwwswwkbbk', 'kbbkkkkkbbbk', 'kbbbbbbbbbbk',
+      'kbkkkkkkkkbk', 'kbkllllllkbk', 'kbklgggglkbk', 'kbkllllllkbk', 'kdkllllllkdk', 'kkkkkkkkkkkk'] },
     ball: { pal: { r: '#ff4d4d', w: '#f4f4f4', s: '#c23a3a' }, rows: [
       '....kkkk....', '..kkrrrrkk..', '.krwrrrrrrk.', '.krwrrrrrsk.', 'krrrrkkrrssk', 'kkkkkwwkkkkk',
       'kwwwkwwkwwwk', 'kwwwwkkwwwwk', '.kwwwwwwwwk.', '.kwwwwwwwwk.', '..kkwwwwkk..', '....kkkk....'] }
@@ -218,7 +240,16 @@ G.Icons = (() => {
     turret:     ['.###.', '.#.#.', '.###.', '..#..', '#####'],
     dash:       ['#.#..', '.#.#.', '..#.#', '.#.#.', '#.#..'],
     trail:      ['#....', '.....', '..#..', '.....', '....#'],
-    cone:       ['....#', '..###', '#####', '..###', '....#']
+    cone:       ['....#', '..###', '#####', '..###', '....#'],
+    // nuevas (19-10-2026)
+    homing:     ['.#...', '..#..', '#..#.', '.#..#', '..###'],
+    bounce:     ['#...#', '.#.#.', '..#..', '.....', '#####'],
+    charge:     ['.###.', '#####', '##.##', '#####', '.###.'],
+    spin:       ['.###.', '#....', '#.#.#', '....#', '.###.'],
+    quake:      ['.....', '#...#', '##.##', '#####', '#.#.#'],
+    vortex:     ['####.', '#....', '#.##.', '#..#.', '####.'],
+    shove:      ['#...#', '.#.#.', '.....', '.#.#.', '#...#'],
+    stun:       ['#.#.#', '.....', '..#..', '.....', '#.#.#']
   };
 
   // ---------------- render ----------------

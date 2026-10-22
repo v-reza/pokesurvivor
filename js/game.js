@@ -30,7 +30,14 @@ G.Game = (() => {
     cv = document.getElementById('game');
     ctx = cv.getContext('2d');
     resize();
-    addEventListener('resize', resize);
+    addEventListener('resize', resizeSoon);
+    // iPhone: al girarlo o al abrirlo desde la pantalla de inicio avisa del
+    // cambio ANTES de recolocar la página, y con esas medidas viejas el juego
+    // se quedaba estirado. Se vuelve a medir cuando el lienzo cambia de verdad
+    // (ResizeObserver) y, por si acaso, un poco después de cada aviso.
+    addEventListener('orientationchange', resizeSoon);
+    if (window.visualViewport) visualViewport.addEventListener('resize', resizeSoon);
+    if (window.ResizeObserver) new ResizeObserver(() => resize()).observe(cv);
     G.Touch.init(cv);
     // En móvil: al cambiar de app o girarlo en vertical, la partida se pausa.
     document.addEventListener('visibilitychange', () => { if (document.hidden) autoPause(); });
@@ -43,12 +50,22 @@ G.Game = (() => {
   function resize() {
     // Resolución interna como mucho ×1,5: en pantallas ×2 dibujar el doble de
     // píxeles era de lo que más costaba, y con el pixel art no se nota.
-    dpr = Math.min(1.5, window.devicePixelRatio || 1);
-    w = cv.clientWidth; h = cv.clientHeight;
+    const d = Math.min(1.5, window.devicePixelRatio || 1);
+    const cw = cv.clientWidth, ch = cv.clientHeight;
+    if (!cw || !ch) return;
+    G.Touch.resetSafe();
+    if (cw === w && ch === h && d === dpr && cv.width === Math.round(cw * d) && cv.height === Math.round(ch * d)) { checkOrientation(); return; }
+    dpr = d; w = cw; h = ch;
     cv.width = Math.round(w * dpr);
     cv.height = Math.round(h * dpr);
     G.Camera.resize(w, h, dpr);
     checkOrientation();
+  }
+  let resizeTs = [];
+  function resizeSoon() {
+    resize();
+    resizeTs.forEach(clearTimeout);
+    resizeTs = [100, 350, 800].map(ms => setTimeout(resize, ms));
   }
 
   /** Móvil en vertical: aviso de girarlo (y pausa). */
@@ -88,7 +105,8 @@ G.Game = (() => {
   function startRun(coop = null) {
     holdBy = []; awayBy = null;
     const save = G.DB.save;
-    const mon = G.DEX_BY[save.partner];
+    // Con su naturaleza aplicada (una copia: ver systems/mons.js).
+    const mon = G.Mons.monFor(save.partner);
     const perks = G.Upgrades.perks(G.DB.upgradesOf(mon.dex));
 
     G.UI.hideAll();
@@ -112,6 +130,7 @@ G.Game = (() => {
     runReal = performance.now(); tampered = false;
 
     pl = new G.Player(mon, perks, !!save.partnerShiny && G.DB.ownsShiny(mon.dex));
+    pl.setAbility(G.Mons.abilityOf(mon.dex).id);
     banked = { t1: 0, t10: 0 };
     caught = [];
     // Atajos: movimientos con hueco fijo (save.pbind[dex] = [id del 1, id del 2, ...]),
@@ -120,10 +139,13 @@ G.Game = (() => {
     pl.addMove(G.startMoveOf(mon.dex));
     // Mejora "Veto": movimientos que no quieres que te salgan.
     pl.banned = new Set((save.pban && save.pban[mon.dex] || []).slice(0, perks.bans));
-    // Mejora "Repertorio": un segundo movimiento de ataque al azar.
+    // Mejora "Repertorio": un segundo movimiento de ataque, el elegido con
+    // "Segundo movimiento inicial" o, si no, al azar.
     if (perks.startMoves >= 2) {
+      const pick2 = G.startMove2Of(mon.dex);
       const pool = G.Moves.poolFor(mon).filter(id => !pl.hasMove(id) && !pl.banned.has(id) && G.Moves.BY_ID[id].kind !== 'buff');
-      if (pool.length) pl.addMove(G.U.pick(pool));
+      if (pick2 && !pl.hasMove(pick2)) pl.addMove(pick2);
+      else if (pool.length) pl.addMove(G.U.pick(pool));
       pl.setActive(0);
     }
 
@@ -216,6 +238,8 @@ G.Game = (() => {
     },
     /** ¿Estás eligiendo algo que para la partida (objeto o vínculo)? */
     choosing() { return state === 'choice'; },
+    /** A quién miras mientras estás caído (uid, o '' si a ti). */
+    watching() { const w = watched(); return w ? w.uid : ''; },
     inLevelUp() { return state === 'levelup'; },
     shiny(dex) { G.onShinyCaught({ dex, name: (G.DEX_BY[dex] || {}).name || '' }); },
     over(d) {
@@ -304,6 +328,8 @@ G.Game = (() => {
     save.coins += coins;
     bankTickets(false);
     save.stats.runs++;
+    save.pused = save.pused || {};
+    save.pused[pl.dex] = (+save.pused[pl.dex] || 0) + 1;     // para "más usados" en la colección
     save.stats.totalKills += pl.kills;
     save.stats.bestTime = Math.max(save.stats.bestTime, Math.floor(time));
     if (coop) save.stats.bestGroupTime = Math.max(save.stats.bestGroupTime || 0, Math.floor(time));
@@ -314,7 +340,7 @@ G.Game = (() => {
     G.Judgment.reset();
     G.Progress.event('runEnd', { time, level: pl.level, coins: pl.coins, types: pl.mon.types, group: coop });
     G.Progress.checkAch();
-    // A la nube al acabar la partida (como mucho cada 30 min); si la marca entra
+    // A la nube al acabar la partida (como mucho cada hora); si la marca entra
     // en un top (hoy, semana o mes), enseguida (abajo, tras subirla al ranking).
     G.DB.commit('run');
     if (G.Social.me) G.Social.publishProfile();
@@ -544,7 +570,7 @@ G.Game = (() => {
     }
     if (state === 'ui') {
       // Esc en una subpantalla del menú vuelve al menú.
-      if (G.Input.tap('escape') && !G.UI.isOpen('scr-profile') && ['scr-dex', 'scr-upgrades', 'scr-gacha', 'scr-friends', 'scr-rank', 'scr-goals'].some(G.UI.isOpen)
+      if (G.Input.tap('escape') && !G.UI.isOpen('scr-profile') && ['scr-dex', 'scr-upgrades', 'scr-shop', 'scr-bag', 'scr-gacha', 'scr-friends', 'scr-rank', 'scr-goals'].some(G.UI.isOpen)
           && document.getElementById('pull-fx').classList.contains('hidden')) G.MenuUI.open();
       return;
     }
@@ -553,6 +579,8 @@ G.Game = (() => {
     for (let i = 0; i < 4; i++) {
       if (G.Input.tap('digit' + (i + 1)) || G.Input.tap('numpad' + (i + 1))) pl.setActive(i);
     }
+    // Caído en grupo: Q / E cambian a quién miras.
+    if (pl.dead) { if (G.Input.tap('keyq')) cycleWatch(-1); if (G.Input.tap('keye') || G.Input.tap('tab')) cycleWatch(1); return; }
     if (G.Input.tap('keyq')) pl.cycle(-1);
     if (G.Input.tap('keye') || G.Input.tap('tab')) pl.cycle(1);
   }
@@ -560,6 +588,23 @@ G.Game = (() => {
   // ---------------- bucle ----------------
 
   let deathT = 0;
+
+  // Caído en grupo: puedes mirar a un compañero vivo. Sólo cambia a quién
+  // sigue la cámara (y el anfitrión te manda los enemigos de allí).
+  let watch = null;
+  /** El compañero al que miras, o null si miras tu cuerpo. */
+  function watched() {
+    if (!pl || !pl.dead || !G.Coop.active) return (watch = null);
+    if (watch && (watch.dead || !G.Coop.puppets().includes(watch))) watch = G.Coop.puppets().find(p => !p.dead) || null;
+    return watch;
+  }
+  /** Cambia a quién miras: tú → cada compañero vivo → tú. */
+  function cycleWatch(dir) {
+    const list = [null, ...G.Coop.puppets().filter(p => !p.dead)];
+    if (list.length < 2) return;
+    watch = list[(list.indexOf(watched()) + dir + list.length) % list.length];
+    G.Audio.sfx('click');
+  }
 
   let frameDt = 0, speedK = 1;
   let fpsShown = 60, fpsAcc = 0, fpsN = 0;
@@ -595,6 +640,7 @@ G.Game = (() => {
     if (fpsAcc >= 0.5) { fpsShown = Math.round(fpsN / fpsAcc); fpsAcc = 0; fpsN = 0; }
     frameDt = state === 'playing' ? dt : 0;
 
+    G.Pad.poll(real);
     handleKeys();
 
     if (state === 'playing') update(dt);
@@ -649,7 +695,8 @@ G.Game = (() => {
       for (const p of G.Coop.puppets()) { p.netUpdate(dt); G.Combat.ghostOrbit(p, dt, time); }
       if (pl.dead) reviveTick(dt);
     }
-    G.Camera.follow(pl.x, pl.y, dt);
+    const view = watched() || pl;
+    G.Camera.follow(view.x, view.y, dt);
     G.World.update(dt, G.Camera);
 
     const all = everyone();
@@ -722,6 +769,33 @@ G.Game = (() => {
     }
   }
 
+  /*
+   * Apuntar a mano: una mira donde está el ratón (y el cursor en cruz), o
+   * delante de tu Pokémon si apuntas con el stick derecho.
+   */
+  function drawAimMark() {
+    const on = state === 'playing' && pl && pl.manualAim && !G.Judgment.cinematic;
+    const cur = on && !G.Pad.aim() ? 'crosshair' : '';
+    if (cv.style.cursor !== cur) cv.style.cursor = cur;
+    if (!on) return;
+    let x, y;
+    if (G.Pad.aim()) {
+      const k = G.Camera.scale;
+      x = (pl.x - G.Camera.left() + Math.cos(pl.aim) * 90) * k;
+      y = (pl.y - G.LIFT * 0.5 - G.Camera.top() + Math.sin(pl.aim) * 90) * k;
+    } else ({ x, y } = G.Input.mouse());
+    ctx.save();
+    ctx.lineCap = 'round';
+    for (const [col, lw] of [['rgba(0,0,0,.65)', 4], ['#ffe9a8', 1.6]]) {
+      ctx.strokeStyle = col; ctx.lineWidth = lw;
+      ctx.beginPath(); ctx.arc(x, y, 9, 0, 6.2832); ctx.stroke();
+      ctx.beginPath();
+      for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) { ctx.moveTo(x + dx * 5, y + dy * 5); ctx.lineTo(x + dx * 14, y + dy * 14); }
+      ctx.stroke();
+    }
+    ctx.restore();
+  }
+
   function render() {
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     ctx.clearRect(0, 0, w, h);
@@ -751,6 +825,7 @@ G.Game = (() => {
     if (!G.Judgment.cinematic) G.HUD.draw(ctx, w, h, pl, st);
     G.Judgment.drawOverlay(ctx, w, h);
     G.Touch.draw(ctx);
+    drawAimMark();
     if (G.Settings.get('fps')) {
       ctx.save();
       ctx.font = '700 11px Pixelify, monospace';
@@ -868,12 +943,14 @@ G.Game = (() => {
     debugTime(t) { tampered = true; time = t; },
     /** Para grabar vídeos: cámara lenta (0,5 = mitad de velocidad). */
     debugSpeed(k) { if (k > 1) tampered = true; speedK = k; },
-    togglePause,
+    togglePause, cycleWatch,
+    /** El compañero al que miras estando caído (o null). */
+    get watching() { return watched(); },
     /** Abandona la partida en curso (p. ej. al cerrar sesión desde Ajustes). */
     quit() { if (state !== 'ui' && state !== 'over') quitRun(); },
     /** Para grabar vídeos: abre las cartas de subir de nivel. */
     debugLevelUp() { tampered = true; pl.level++; pendingLevels++; },
-    toUI() { state = 'ui'; Backdrop.restore(); },
+    toUI() { state = 'ui'; if (cv) cv.style.cursor = ''; Backdrop.restore(); },
     get state() { return state; }, get player() { return pl; }, st
   };
 })();
@@ -926,7 +1003,7 @@ G.Flow = {
     if (G.Game.state !== 'ui') G.Game.toUI();
     G.Audio.music('village');
     G.MenuUI.open();
-    G.LoginUI.offerRecovery();
+    if (!G.LoginUI.updateNotices()) G.LoginUI.offerRecovery();
   },
   /** Al cerrar el resumen: a la sala si sigues en una, si no al menú. */
   afterRun() {
